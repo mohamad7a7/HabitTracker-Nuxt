@@ -1,9 +1,9 @@
 export function useAuth() {
+    const { request, getErrorMessage } = useApi()
+
     const currentUser = useState('habitTrackerUser', function () {
         return null
     })
-
-    const { request } = useApi()
 
     const isLoggedIn = computed(function () {
         return Boolean(currentUser.value)
@@ -30,6 +30,14 @@ export function useAuth() {
             'POST'
         ).then(function () {
             return checkAuth()
+        }).then(function (isAuthenticated) {
+            if (!isAuthenticated) {
+                return Promise.reject({
+                    message: 'ورود به حساب کاربری انجام نشد.'
+                })
+            }
+
+            return currentUser.value
         })
     }
 
@@ -69,6 +77,7 @@ export function useAuth() {
         register,
         login,
         logout,
-        checkAuth
+        checkAuth,
+        getErrorMessage
     }
 }
