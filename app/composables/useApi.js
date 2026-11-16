@@ -30,23 +30,20 @@ export function useApi() {
         }
 
         return fetch(url.toString(), options).then(function (response) {
-            return response.text().then(function (text) {
-                let result = {}
-
-                try {
-                    result = text ? JSON.parse(text) : {}
-                } catch {
-                    result = {
-                        message: text
+            return response.json().then(
+                function (result) {
+                    if (!response.ok) {
+                        return Promise.reject(result)
                     }
-                }
 
-                if (!response.ok) {
-                    return Promise.reject(result)
+                    return result.message
+                },
+                function () {
+                    return Promise.reject({
+                        message: 'پاسخ سرور در قالب JSON معتبر نیست.'
+                    })
                 }
-
-                return result.message
-            })
+            )
         })
     }
 
