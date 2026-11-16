@@ -68,7 +68,11 @@ export function useAuth() {
         )
             .then(function (username) {
                 if (username && username !== 'Guest') {
-                    currentUser.value = username
+                    const suffix = '@users.habittracker.invalid'
+
+                    currentUser.value = username.endsWith(suffix)
+                        ? username.slice(0, -suffix.length)
+                        : username
                 } else {
                     currentUser.value = null
                 }
