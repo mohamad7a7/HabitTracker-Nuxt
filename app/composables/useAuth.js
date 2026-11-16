@@ -5,6 +5,10 @@ export function useAuth() {
         return null
     })
 
+    const authChecked = useState('habitTrackerAuthChecked', function () {
+        return false
+    })
+
     const isLoggedIn = computed(function () {
         return Boolean(currentUser.value)
     })
@@ -28,17 +32,19 @@ export function useAuth() {
                 pwd: password
             },
             'POST'
-        ).then(function () {
-            return checkAuth()
-        }).then(function (isAuthenticated) {
-            if (!isAuthenticated) {
-                return Promise.reject({
-                    message: 'ورود به حساب کاربری انجام نشد.'
-                })
-            }
+        )
+            .then(function () {
+                return checkAuth()
+            })
+            .then(function (isAuthenticated) {
+                if (!isAuthenticated) {
+                    return Promise.reject({
+                        message: 'ورود به حساب کاربری انجام نشد.'
+                    })
+                }
 
-            return currentUser.value
-        })
+                return currentUser.value
+            })
     }
 
     function logout() {
@@ -48,6 +54,7 @@ export function useAuth() {
             'POST'
         ).then(function (result) {
             currentUser.value = null
+            authChecked.value = true
 
             return result
         })
@@ -58,21 +65,29 @@ export function useAuth() {
             'frappe.auth.get_logged_user',
             {},
             'GET'
-        ).then(function (username) {
-            if (username && username !== 'Guest') {
-                currentUser.value = username
+        )
+            .then(function (username) {
+                if (username && username !== 'Guest') {
+                    currentUser.value = username
+                } else {
+                    currentUser.value = null
+                }
 
-                return true
-            }
+                authChecked.value = true
 
-            currentUser.value = null
+                return isLoggedIn.value
+            })
+            .catch(function (error) {
+                currentUser.value = null
+                authChecked.value = false
 
-            return false
-        })
+                return Promise.reject(error)
+            })
     }
 
     return {
         currentUser,
+        authChecked,
         isLoggedIn,
         register,
         login,
