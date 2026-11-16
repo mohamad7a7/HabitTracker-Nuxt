@@ -5,6 +5,11 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  devServer: {
+    host: 'frappe.localhost',
+    port: 3000
+  },
+
   runtimeConfig: {
     public: {
       frappeBaseUrl: ''
