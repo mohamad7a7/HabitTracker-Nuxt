@@ -38,26 +38,20 @@ export function useApi() {
 
                     return result.message
                 },
-                function () {
-                    return Promise.reject({
-                        message: 'پاسخ سرور در قالب JSON معتبر نیست.'
-                    })
-                }
             )
         })
     }
 
     function getErrorMessage(error) {
         if (error && error._server_messages) {
-            try {
-                const messages = JSON.parse(error._server_messages)
 
-                const firstMessage = JSON.parse(messages[0])
+            const messages = JSON.parse(error._server_messages)
 
-                if (firstMessage.message) {
-                    return firstMessage.message
-                }
-            } catch { }
+            const firstMessage = JSON.parse(messages[0])
+
+            if (firstMessage.message) {
+                return firstMessage.message
+            }
         }
 
         if (error && typeof error.message === 'string') {
