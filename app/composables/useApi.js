@@ -44,14 +44,15 @@ export function useApi() {
 
     function getErrorMessage(error) {
         if (error && error._server_messages) {
+            try {
+                const messages = JSON.parse(error._server_messages)
 
-            const messages = JSON.parse(error._server_messages)
+                const firstMessage = JSON.parse(messages[0])
 
-            const firstMessage = JSON.parse(messages[0])
-
-            if (firstMessage.message) {
-                return firstMessage.message
-            }
+                if (firstMessage.message) {
+                    return firstMessage.message
+                }
+            } catch { }
         }
 
         if (error && typeof error.message === 'string') {
