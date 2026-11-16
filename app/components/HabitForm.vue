@@ -7,8 +7,14 @@ const props = defineProps({
     initialData: {
         type: Object,
         required: true
+    },
+    loading: {
+        type: Boolean,
+        default: false
     }
 })
+
+const emit = defineEmits(['submit'])
 
 const form = reactive({
     title: '',
@@ -20,9 +26,7 @@ const form = reactive({
 })
 
 watch(
-    function () {
-        return props.initialData
-    },
+    () => props.initialData,
     function (value) {
         form.title = value.title || ''
         form.frequency = value.frequency || 'D'
@@ -36,10 +40,21 @@ watch(
         deep: true
     }
 )
+
+function submitForm() {
+    emit('submit', {
+        title: form.title.trim(),
+        frequency: form.frequency,
+        time: form.time,
+        start_date: form.frequency === 'D' ? form.start_date : '',
+        once_date: form.frequency === 'O' ? form.once_date : '',
+        day_of_month: form.frequency === 'M' ? form.day_of_month : ''
+    })
+}
 </script>
 
 <template>
-    <form @submit.prevent>
+    <form @submit.prevent="submitForm">
         <div>
             <label for="title">عنوان عادت</label>
 
@@ -65,23 +80,29 @@ watch(
         <div v-if="form.frequency === 'D'">
             <label for="start_date">تاریخ شروع</label>
 
-            <input id="start_date" v-model="form.start_date" type="date" />
+            <input id="start_date" v-model="form.start_date" type="date" required />
         </div>
 
         <div v-if="form.frequency === 'O'">
             <label for="once_date">تاریخ انجام</label>
 
-            <input id="once_date" v-model="form.once_date" type="date" />
+            <input id="once_date" v-model="form.once_date" type="date" required />
         </div>
 
         <div v-if="form.frequency === 'M'">
             <label for="day_of_month">روز ماه</label>
 
-            <input id="day_of_month" v-model="form.day_of_month" type="number" min="1" max="31" />
+            <input id="day_of_month" v-model="form.day_of_month" type="number" min="1" max="31" required />
         </div>
 
-        <button type="submit" disabled>
-            {{ mode === 'create' ? 'ایجاد عادت' : 'ذخیره تغییرات' }}
+        <button type="submit" :disabled="loading">
+            {{
+                loading
+                    ? 'در حال ذخیره...'
+                    : mode === 'create'
+                        ? 'ایجاد عادت'
+                        : 'ذخیره تغییرات'
+            }}
         </button>
     </form>
 </template>
