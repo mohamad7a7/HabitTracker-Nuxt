@@ -11,10 +11,6 @@ const habitName = computed(function () {
     return route.params.name
 })
 
-const isNewHabit = computed(function () {
-    return habitName.value === 'new'
-})
-
 const habitFields = reactive({
     title: '',
     frequency: 'D',
@@ -39,7 +35,7 @@ function loadHabit() {
     errorMessage.value = ''
     clearFields()
 
-    if (isNewHabit.value) {
+    if (habitName.value === 'new') {
         return
     }
 
@@ -94,7 +90,7 @@ function submitHabit() {
     }
 
     storeHabit(
-        isNewHabit.value ? '' : habitName.value,
+        habitName.value === 'new' ? '' : habitName.value,
         habitData
     )
         .then(function () {
@@ -110,7 +106,7 @@ function submitHabit() {
     <main>
         <h1>اطلاعات عادت</h1>
 
-        <p v-if="errorMessage" role="alert">
+        <p v-if="errorMessage">
             {{ errorMessage }}
         </p>
 
