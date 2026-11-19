@@ -32,35 +32,36 @@ function submitAccount() {
     errorText.value = ''
     registrationDone.value = false
 
-    let accountRequest
-
     if (loginMode.value) {
-        accountRequest = signIn(
+        signIn(
             usernameInput.value.trim(),
             passwordInput.value
         )
-    } else {
-        accountRequest = signUp(
-            usernameInput.value.trim(),
-            passwordInput.value
-        )
-    }
-
-    accountRequest
-        .then(function () {
-            if (loginMode.value) {
+            .then(function () {
                 return navigateTo('/')
-            }
-
-            registrationDone.value = true
-            passwordInput.value = ''
-        })
-        .catch(function (error) {
-            errorText.value = showError(error)
-        })
-        .finally(function () {
-            processing.value = false
-        })
+            })
+            .catch(function (error) {
+                errorText.value = showError(error)
+            })
+            .finally(function () {
+                processing.value = false
+            })
+    } else {
+        signUp(
+            usernameInput.value.trim(),
+            passwordInput.value
+        )
+            .then(function () {
+                registrationDone.value = true
+                passwordInput.value = ''
+            })
+            .catch(function (error) {
+                errorText.value = showError(error)
+            })
+            .finally(function () {
+                processing.value = false
+            })
+    }
 }
 </script>
 
