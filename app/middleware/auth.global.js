@@ -20,17 +20,4 @@ export default defineNuxtRouteMiddleware(function (to) {
         }
     }
 
-    if (userName.value !== null) {
-        return checkAccess()
-    }
-
-    return checkLogin()
-        .then(function () {
-            return checkAccess()
-        })
-        .catch(function () {
-            if (!isAuthPage) {
-                return navigateTo('/auth')
-            }
-        })
 })
