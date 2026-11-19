@@ -13,13 +13,13 @@ const passwordInput = ref('')
 const processing = ref(false)
 
 const errorText = ref('')
-const successText = ref('')
+const registrationDone = ref(false)
 
 function changeMode() {
     loginMode.value = !loginMode.value
 
     errorText.value = ''
-    successText.value = ''
+    registrationDone.value = false
     passwordInput.value = ''
 }
 
@@ -29,9 +29,8 @@ function submitAccount() {
     }
 
     processing.value = true
-
     errorText.value = ''
-    successText.value = ''
+    registrationDone.value = false
 
     let accountRequest
 
@@ -53,8 +52,7 @@ function submitAccount() {
                 return navigateTo('/')
             }
 
-            successText.value = 'ثبت‌نام با موفقیت انجام شد.'
-
+            registrationDone.value = true
             passwordInput.value = ''
         })
         .catch(function (error) {
@@ -68,9 +66,7 @@ function submitAccount() {
 
 <template>
     <main>
-        <h1>
-            {{ loginMode ? 'ورود به حساب کاربری' : 'ثبت‌نام' }}
-        </h1>
+        <h1>حساب کاربری</h1>
 
         <form @submit.prevent="submitAccount">
             <div>
@@ -94,27 +90,17 @@ function submitAccount() {
                 {{ errorText }}
             </p>
 
-            <p v-if="successText" role="status">
-                {{ successText }}
+            <p v-if="registrationDone" role="status">
+                ثبت‌نام با موفقیت انجام شد.
             </p>
 
             <button type="submit" :disabled="processing">
-                {{
-                    processing
-                        ? 'لطفاً صبر کنید...'
-                        : loginMode
-                            ? 'ورود'
-                            : 'ثبت‌نام'
-                }}
+                ارسال
             </button>
         </form>
 
         <button type="button" :disabled="processing" @click="changeMode">
-            {{
-                loginMode
-                    ? 'ایجاد حساب کاربری جدید'
-                    : 'بازگشت به ورود'
-            }}
+            تغییر حالت ورود و ثبت‌نام
         </button>
     </main>
 </template>

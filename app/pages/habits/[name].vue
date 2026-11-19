@@ -125,13 +125,7 @@ function submitHabit() {
 
 <template>
     <main>
-        <h1>
-            {{ isNewHabit ? 'ایجاد عادت جدید' : 'ویرایش عادت' }}
-        </h1>
-
-        <p v-if="loadingData">
-            در حال دریافت اطلاعات...
-        </p>
+        <h1>اطلاعات عادت</h1>
 
         <p v-if="errorMessage" role="alert">
             {{ errorMessage }}
@@ -191,18 +185,12 @@ function submitHabit() {
             </div>
 
             <button type="submit" :disabled="saving">
-                {{
-                    saving
-                        ? 'در حال ذخیره...'
-                        : isNewHabit
-                            ? 'ایجاد عادت'
-                            : 'ذخیره تغییرات'
-                }}
+                ذخیره عادت
             </button>
         </form>
 
         <NuxtLink to="/">
-            بازگشت به صفحه اصلی
+            بازگشت
         </NuxtLink>
     </main>
 </template>

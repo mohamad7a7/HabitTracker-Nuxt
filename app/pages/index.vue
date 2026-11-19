@@ -1,6 +1,5 @@
 <script setup>
 const {
-    userName,
     signOut,
     listHabits,
     listCheckins,
@@ -9,19 +8,15 @@ const {
     showError
 } = useApp()
 
-const habitCards = ref([])
+const habitCards = ref(null)
 const dailyRecords = ref([])
 
-const loading = ref(true)
-const busyHabit = ref('')
-
+const busyAction = ref(false)
 const errorMessage = ref('')
-const successMessage = ref('')
 
-const todayDate = ref('')
+const todayDate = getTodayDate()
 
 onMounted(function () {
-    todayDate.value = getTodayDate()
     refreshDashboard()
 })
 
@@ -36,7 +31,6 @@ function getTodayDate() {
 }
 
 function refreshDashboard() {
-    loading.value = true
     errorMessage.value = ''
 
     return Promise.all([
@@ -48,17 +42,15 @@ function refreshDashboard() {
             dailyRecords.value = results[1].checkins || []
         })
         .catch(function (error) {
+            habitCards.value = []
             errorMessage.value = showError(error)
-        })
-        .finally(function () {
-            loading.value = false
         })
 }
 
 function findTodayCheckin(habitName) {
     return dailyRecords.value.find(function (item) {
         return item.habit === habitName &&
-            item.date === todayDate.value
+            item.date === todayDate
     })
 }
 
@@ -69,7 +61,7 @@ function habitIsComplete(habitName) {
 }
 
 function toggleCompletion(habit) {
-    if (busyHabit.value) {
+    if (busyAction.value) {
         return
     }
 
@@ -79,19 +71,15 @@ function toggleCompletion(habit) {
         ? Number(previousRecord.is_done) !== 1
         : true
 
-    busyHabit.value = habit.name
-
+    busyAction.value = true
     errorMessage.value = ''
-    successMessage.value = ''
 
     saveCheckin(
         habit.name,
-        todayDate.value,
+        todayDate,
         nextStatus
     )
         .then(function () {
-            successMessage.value = 'وضعیت عادت ثبت شد.'
-
             return listCheckins()
         })
         .then(function (result) {
@@ -101,12 +89,12 @@ function toggleCompletion(habit) {
             errorMessage.value = showError(error)
         })
         .finally(function () {
-            busyHabit.value = ''
+            busyAction.value = false
         })
 }
 
 function removeSelectedHabit(habit) {
-    if (busyHabit.value) {
+    if (busyAction.value) {
         return
     }
 
@@ -118,10 +106,8 @@ function removeSelectedHabit(habit) {
         return
     }
 
-    busyHabit.value = habit.name
-
+    busyAction.value = true
     errorMessage.value = ''
-    successMessage.value = ''
 
     eraseHabit(habit.name)
         .then(function () {
@@ -132,14 +118,32 @@ function removeSelectedHabit(habit) {
             dailyRecords.value = dailyRecords.value.filter(function (item) {
                 return item.habit !== habit.name
             })
-
-            successMessage.value = 'عادت حذف شد.'
         })
         .catch(function (error) {
             errorMessage.value = showError(error)
         })
         .finally(function () {
-            busyHabit.value = ''
+            busyAction.value = false
+        })
+}
+
+function leaveAccount() {
+    if (busyAction.value) {
+        return
+    }
+
+    busyAction.value = true
+    errorMessage.value = ''
+
+    signOut()
+        .then(function () {
+            return navigateTo('/auth')
+        })
+        .catch(function (error) {
+            errorMessage.value = showError(error)
+        })
+        .finally(function () {
+            busyAction.value = false
         })
 }
 
@@ -168,57 +172,25 @@ function getSchedule(habit) {
 
     return ''
 }
-
-function leaveAccount() {
-    if (busyHabit.value) {
-        return
-    }
-
-    busyHabit.value = 'logout'
-
-    errorMessage.value = ''
-
-    signOut()
-        .then(function () {
-            return navigateTo('/auth')
-        })
-        .catch(function (error) {
-            errorMessage.value = showError(error)
-        })
-        .finally(function () {
-            busyHabit.value = ''
-        })
-}
 </script>
 
 <template>
     <main>
         <h1>عادت‌های من</h1>
 
-        <p v-if="userName">
-            خوش آمدید {{ userName }}
-        </p>
-
-        <button type="button" :disabled="busyHabit !== ''" @click="leaveAccount">
-            {{ busyHabit === 'logout' ? 'در حال خروج...' : 'خروج' }}
-        </button>
-
-        <hr />
-
         <NuxtLink to="/habits/new">
             ایجاد عادت جدید
         </NuxtLink>
 
-        <p v-if="successMessage" role="status">
-            {{ successMessage }}
-        </p>
+        <button type="button" :disabled="busyAction" @click="leaveAccount">
+            خروج
+        </button>
 
         <p v-if="errorMessage" role="alert">
             {{ errorMessage }}
         </p>
 
-        <p v-if="loading">
-            در حال دریافت اطلاعات...
+        <p v-else-if="habitCards === null">
         </p>
 
         <p v-else-if="habitCards.length === 0">
@@ -247,21 +219,15 @@ function leaveAccount() {
                     {{ habitIsComplete(habit.name) ? 'انجام شده' : 'انجام نشده' }}
                 </p>
 
-                <button type="button" :disabled="busyHabit !== ''" @click="toggleCompletion(habit)">
-                    {{
-                        busyHabit === habit.name
-                            ? 'در حال ثبت...'
-                            : habitIsComplete(habit.name)
-                                ? 'علامت‌گذاری به‌عنوان انجام نشده'
-                                : 'علامت‌گذاری به‌عنوان انجام شده'
-                    }}
+                <button type="button" :disabled="busyAction" @click="toggleCompletion(habit)">
+                    ثبت وضعیت امروز
                 </button>
 
                 <NuxtLink :to="'/habits/' + habit.name">
                     ویرایش
                 </NuxtLink>
 
-                <button type="button" :disabled="busyHabit !== ''" @click="removeSelectedHabit(habit)">
+                <button type="button" :disabled="busyAction" @click="removeSelectedHabit(habit)">
                     حذف
                 </button>
 
