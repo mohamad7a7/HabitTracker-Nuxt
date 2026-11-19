@@ -10,12 +10,6 @@ export function useApp() {
     function sendRequest(methodName, data, httpMethod) {
         const method = httpMethod || 'POST'
 
-        if (!serverUrl) {
-            return Promise.reject({
-                message: 'آدرس سرور مشخص نشده است.'
-            })
-        }
-
         const address = new URL(
             serverUrl + '/api/method/' + methodName
         )
@@ -40,17 +34,7 @@ export function useApp() {
         }
 
         return fetch(address.toString(), options).then(function (response) {
-            return response.text().then(function (text) {
-                let result = {}
-
-                try {
-                    result = JSON.parse(text || '{}')
-                } catch {
-                    return Promise.reject({
-                        message: 'پاسخ معتبر از سرور دریافت نشد.'
-                    })
-                }
-
+            return response.json().then(function (result) {
                 if (!response.ok) {
                     return Promise.reject(result)
                 }
