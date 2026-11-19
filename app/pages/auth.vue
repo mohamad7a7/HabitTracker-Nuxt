@@ -5,63 +5,37 @@ const {
     showError
 } = useApp()
 
-const loginMode = ref(true)
-
 const usernameInput = ref('')
 const passwordInput = ref('')
-
-const processing = ref(false)
 
 const errorText = ref('')
 const registrationDone = ref(false)
 
-function changeMode() {
-    loginMode.value = !loginMode.value
-
-    errorText.value = ''
-    registrationDone.value = false
-    passwordInput.value = ''
+function enterAccount() {
+    signIn(
+        usernameInput.value,
+        passwordInput.value
+    )
+        .then(function () {
+            return navigateTo('/')
+        })
+        .catch(function (error) {
+            errorText.value = showError(error)
+        })
 }
 
-function submitAccount() {
-    if (processing.value) {
-        return
-    }
-
-    processing.value = true
-    errorText.value = ''
-    registrationDone.value = false
-
-    if (loginMode.value) {
-        signIn(
-            usernameInput.value.trim(),
-            passwordInput.value
-        )
-            .then(function () {
-                return navigateTo('/')
-            })
-            .catch(function (error) {
-                errorText.value = showError(error)
-            })
-            .finally(function () {
-                processing.value = false
-            })
-    } else {
-        signUp(
-            usernameInput.value.trim(),
-            passwordInput.value
-        )
-            .then(function () {
-                registrationDone.value = true
-                passwordInput.value = ''
-            })
-            .catch(function (error) {
-                errorText.value = showError(error)
-            })
-            .finally(function () {
-                processing.value = false
-            })
-    }
+function createAccount() {
+    signUp(
+        usernameInput.value,
+        passwordInput.value
+    )
+        .then(function () {
+            registrationDone.value = true
+            passwordInput.value = ''
+        })
+        .catch(function (error) {
+            errorText.value = showError(error)
+        })
 }
 </script>
 
@@ -69,7 +43,7 @@ function submitAccount() {
     <main>
         <h1>حساب کاربری</h1>
 
-        <form @submit.prevent="submitAccount">
+        <form @submit.prevent="enterAccount">
             <div>
                 <label for="username">
                     نام کاربری
@@ -83,25 +57,24 @@ function submitAccount() {
                     رمز عبور
                 </label>
 
-                <input id="password" v-model="passwordInput" type="password"
-                    :autocomplete="loginMode ? 'current-password' : 'new-password'" required />
+                <input id="password" v-model="passwordInput" type="password" autocomplete="current-password" required />
             </div>
 
-            <p v-if="errorText" role="alert">
+            <p v-if="errorText">
                 {{ errorText }}
             </p>
 
-            <p v-if="registrationDone" role="status">
+            <p v-if="registrationDone">
                 ثبت‌نام با موفقیت انجام شد.
             </p>
 
-            <button type="submit" :disabled="processing">
-                ارسال
+            <button type="submit">
+                ورود
+            </button>
+
+            <button type="button" @click="createAccount">
+                ثبت‌نام
             </button>
         </form>
-
-        <button type="button" :disabled="processing" @click="changeMode">
-            تغییر حالت ورود و ثبت‌نام
-        </button>
     </main>
 </template>
