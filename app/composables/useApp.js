@@ -4,11 +4,7 @@ export function useApp() {
     const serverUrl = (settings.public.frappeBaseUrl || '').replace(/\/+$/, '')
 
     const userName = useState('habitUserName', function () {
-        return ''
-    })
-
-    const loginChecked = useState('habitLoginChecked', function () {
-        return false
+        return null
     })
 
     function sendRequest(methodName, data, httpMethod) {
@@ -99,12 +95,9 @@ export function useApp() {
                 userName.value = ''
             }
 
-            loginChecked.value = true
-
             return Boolean(userName.value)
         }).catch(function (error) {
             userName.value = ''
-            loginChecked.value = false
 
             return Promise.reject(error)
         })
@@ -149,7 +142,6 @@ export function useApp() {
             'POST'
         ).then(function (result) {
             userName.value = ''
-            loginChecked.value = true
 
             return result
         })
@@ -229,7 +221,6 @@ export function useApp() {
 
     return {
         userName,
-        loginChecked,
         sendRequest,
         showError,
         checkLogin,

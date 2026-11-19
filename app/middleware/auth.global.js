@@ -5,7 +5,6 @@ export default defineNuxtRouteMiddleware(function (to) {
 
     const {
         userName,
-        loginChecked,
         checkLogin
     } = useApp()
 
@@ -21,7 +20,7 @@ export default defineNuxtRouteMiddleware(function (to) {
         }
     }
 
-    if (loginChecked.value) {
+    if (userName.value !== null) {
         return checkAccess()
     }
 
