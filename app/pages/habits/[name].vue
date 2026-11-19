@@ -24,9 +24,6 @@ const habitFields = reactive({
     day_of_month: ''
 })
 
-const saving = ref(false)
-const loadingData = ref(true)
-
 const errorMessage = ref('')
 
 function clearFields() {
@@ -40,14 +37,11 @@ function clearFields() {
 
 function loadHabit() {
     errorMessage.value = ''
+    clearFields()
 
     if (isNewHabit.value) {
-        clearFields()
-        loadingData.value = false
         return
     }
-
-    loadingData.value = true
 
     inspectHabit(habitName.value)
         .then(function (result) {
@@ -63,9 +57,6 @@ function loadHabit() {
         .catch(function (error) {
             errorMessage.value = showError(error)
         })
-        .finally(function () {
-            loadingData.value = false
-        })
 }
 
 onMounted(function () {
@@ -77,16 +68,11 @@ watch(habitName, function () {
 })
 
 function submitHabit() {
-    if (saving.value) {
-        return
-    }
-
     if (!habitFields.title.trim()) {
         errorMessage.value = 'عنوان عادت را وارد کنید.'
         return
     }
 
-    saving.value = true
     errorMessage.value = ''
 
     const habitData = {
@@ -117,9 +103,6 @@ function submitHabit() {
         .catch(function (error) {
             errorMessage.value = showError(error)
         })
-        .finally(function () {
-            saving.value = false
-        })
 }
 </script>
 
@@ -131,7 +114,7 @@ function submitHabit() {
             {{ errorMessage }}
         </p>
 
-        <form v-if="!loadingData && !errorMessage" @submit.prevent="submitHabit">
+        <form v-if="!errorMessage" @submit.prevent="submitHabit">
             <div>
                 <label for="title">
                     عنوان عادت
@@ -184,7 +167,7 @@ function submitHabit() {
                 <input id="day_of_month" v-model="habitFields.day_of_month" type="number" min="1" max="31" required />
             </div>
 
-            <button type="submit" :disabled="saving">
+            <button type="submit">
                 ذخیره عادت
             </button>
         </form>
