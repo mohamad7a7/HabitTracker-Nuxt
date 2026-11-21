@@ -57,7 +57,7 @@ function submitHabit() {
     storeHabit(
         habitName.value === 'new' ? '' : habitName.value,
         {
-            title: habitFields.title.trim(),
+            title: habitFields.title,
             frequency: habitFields.frequency,
             time: habitFields.time,
 
