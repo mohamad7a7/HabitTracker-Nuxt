@@ -5,7 +5,6 @@ export default defineNuxtRouteMiddleware(function (to) {
 
     const {
         userName,
-        checkLogin
     } = useApp()
 
     const isAuthPage = to.path === '/auth'
