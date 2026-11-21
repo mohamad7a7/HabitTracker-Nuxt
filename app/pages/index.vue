@@ -46,25 +46,17 @@ function refreshDashboard() {
         })
 }
 
-function findTodayCheckin(habitName) {
-    return dailyRecords.value.find(function (item) {
+function habitIsComplete(habitName) {
+    const record = dailyRecords.value.find(function (item) {
         return item.habit === habitName &&
             item.date === todayDate
     })
-}
-
-function habitIsComplete(habitName) {
-    const record = findTodayCheckin(habitName)
 
     return Boolean(record && Number(record.is_done) === 1)
 }
 
 function toggleCompletion(habit) {
-    const previousRecord = findTodayCheckin(habit.name)
-
-    const nextStatus = previousRecord
-        ? Number(previousRecord.is_done) !== 1
-        : true
+    const nextStatus = !habitIsComplete(habit.name)
 
     errorMessage.value = ''
 
@@ -84,32 +76,6 @@ function toggleCompletion(habit) {
         })
 }
 
-function removeSelectedHabit(habit) {
-    const confirmation = window.confirm(
-        'آیا از حذف این عادت مطمئن هستید؟'
-    )
-
-    if (!confirmation) {
-        return
-    }
-
-    errorMessage.value = ''
-
-    eraseHabit(habit.name)
-        .then(function () {
-            habitCards.value = habitCards.value.filter(function (item) {
-                return item.name !== habit.name
-            })
-
-            dailyRecords.value = dailyRecords.value.filter(function (item) {
-                return item.habit !== habit.name
-            })
-        })
-        .catch(function (error) {
-            errorMessage.value = showError(error)
-        })
-}
-
 function leaveAccount() {
     errorMessage.value = ''
 
@@ -122,31 +88,30 @@ function leaveAccount() {
         })
 }
 
-function getFrequencyLabel(frequency) {
+function getHabitInfo(habit) {
     const labels = {
         D: 'روزانه',
         O: 'یک‌باره',
         M: 'ماهانه'
     }
 
-    return labels[frequency] || 'نامشخص'
-}
+    let schedule = ''
 
-function getSchedule(habit) {
     if (habit.frequency === 'D') {
-        return 'شروع از: ' + (habit.start_date || 'نامشخص')
+        schedule = 'شروع از: ' + (habit.start_date || 'نامشخص')
     }
 
     if (habit.frequency === 'O') {
-        return 'تاریخ انجام: ' + (habit.once_date || 'نامشخص')
+        schedule = 'تاریخ انجام: ' + (habit.once_date || 'نامشخص')
     }
 
     if (habit.frequency === 'M') {
-        return 'روز ' + (habit.day_of_month || 'نامشخص') + ' هر ماه'
+        schedule = 'روز ' + (habit.day_of_month || 'نامشخص') + ' هر ماه'
     }
 
-    return ''
+    return 'تناوب: ' + (labels[habit.frequency] || 'نامشخص') + ' - ' + schedule
 }
+
 </script>
 
 <template>
@@ -165,14 +130,11 @@ function getSchedule(habit) {
             {{ errorMessage }}
         </p>
 
-        <p v-else-if="habitCards === null">
-        </p>
-
-        <p v-else-if="habitCards.length === 0">
+        <p v-else-if="habitCards && habitCards.length === 0">
             هنوز عادتی ثبت نکرده‌اید.
         </p>
 
-        <section v-else>
+        <section v-else-if="habitCards">
             <article v-for="habit in habitCards" :key="habit.name">
                 <h2>{{ habit.title }}</h2>
 
@@ -202,7 +164,7 @@ function getSchedule(habit) {
                     ویرایش
                 </NuxtLink>
 
-                <button type="button" @click="removeSelectedHabit(habit)">
+                <button type="button" @click="eraseHabit(habit.name)">
                     حذف
                 </button>
 
