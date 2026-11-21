@@ -138,14 +138,7 @@ function getHabitInfo(habit) {
             <article v-for="habit in habitCards" :key="habit.name">
                 <h2>{{ habit.title }}</h2>
 
-                <p>
-                    تناوب:
-                    {{ getFrequencyLabel(habit.frequency) }}
-                </p>
-
-                <p>
-                    {{ getSchedule(habit) }}
-                </p>
+                <p>{{ getHabitInfo(habit) }}</p>
 
                 <p>
                     ساعت: {{ habit.time }}
