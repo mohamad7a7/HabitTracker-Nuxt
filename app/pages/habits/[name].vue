@@ -22,18 +22,8 @@ const habitFields = reactive({
 
 const errorMessage = ref('')
 
-function clearFields() {
-    habitFields.title = ''
-    habitFields.frequency = 'D'
-    habitFields.start_date = ''
-    habitFields.time = ''
-    habitFields.once_date = ''
-    habitFields.day_of_month = ''
-}
-
 function loadHabit() {
-    errorMessage.value = ''
-    clearFields()
+
 
     if (habitName.value === 'new') {
         return
@@ -64,34 +54,25 @@ watch(habitName, function () {
 })
 
 function submitHabit() {
-    if (!habitFields.title.trim()) {
-        errorMessage.value = 'عنوان عادت را وارد کنید.'
-        return
-    }
-
-    errorMessage.value = ''
-
-    const habitData = {
-        title: habitFields.title.trim(),
-        frequency: habitFields.frequency,
-        time: habitFields.time,
-
-        start_date: habitFields.frequency === 'D'
-            ? habitFields.start_date
-            : '',
-
-        once_date: habitFields.frequency === 'O'
-            ? habitFields.once_date
-            : '',
-
-        day_of_month: habitFields.frequency === 'M'
-            ? habitFields.day_of_month
-            : ''
-    }
-
     storeHabit(
         habitName.value === 'new' ? '' : habitName.value,
-        habitData
+        {
+            title: habitFields.title.trim(),
+            frequency: habitFields.frequency,
+            time: habitFields.time,
+
+            start_date: habitFields.frequency === 'D'
+                ? habitFields.start_date
+                : '',
+
+            once_date: habitFields.frequency === 'O'
+                ? habitFields.once_date
+                : '',
+
+            day_of_month: habitFields.frequency === 'M'
+                ? habitFields.day_of_month
+                : ''
+        }
     )
         .then(function () {
             return navigateTo('/')
