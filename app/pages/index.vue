@@ -11,7 +11,6 @@ const {
 const habitCards = ref(null)
 const dailyRecords = ref([])
 
-const busyAction = ref(false)
 const errorMessage = ref('')
 
 const todayDate = getTodayDate()
@@ -61,17 +60,12 @@ function habitIsComplete(habitName) {
 }
 
 function toggleCompletion(habit) {
-    if (busyAction.value) {
-        return
-    }
-
     const previousRecord = findTodayCheckin(habit.name)
 
     const nextStatus = previousRecord
         ? Number(previousRecord.is_done) !== 1
         : true
 
-    busyAction.value = true
     errorMessage.value = ''
 
     saveCheckin(
@@ -88,16 +82,9 @@ function toggleCompletion(habit) {
         .catch(function (error) {
             errorMessage.value = showError(error)
         })
-        .finally(function () {
-            busyAction.value = false
-        })
 }
 
 function removeSelectedHabit(habit) {
-    if (busyAction.value) {
-        return
-    }
-
     const confirmation = window.confirm(
         'آیا از حذف این عادت مطمئن هستید؟'
     )
@@ -106,7 +93,6 @@ function removeSelectedHabit(habit) {
         return
     }
 
-    busyAction.value = true
     errorMessage.value = ''
 
     eraseHabit(habit.name)
@@ -122,17 +108,9 @@ function removeSelectedHabit(habit) {
         .catch(function (error) {
             errorMessage.value = showError(error)
         })
-        .finally(function () {
-            busyAction.value = false
-        })
 }
 
 function leaveAccount() {
-    if (busyAction.value) {
-        return
-    }
-
-    busyAction.value = true
     errorMessage.value = ''
 
     signOut()
@@ -141,9 +119,6 @@ function leaveAccount() {
         })
         .catch(function (error) {
             errorMessage.value = showError(error)
-        })
-        .finally(function () {
-            busyAction.value = false
         })
 }
 
@@ -182,7 +157,7 @@ function getSchedule(habit) {
             ایجاد عادت جدید
         </NuxtLink>
 
-        <button type="button" :disabled="busyAction" @click="leaveAccount">
+        <button type="button" @click="leaveAccount">
             خروج
         </button>
 
@@ -219,7 +194,7 @@ function getSchedule(habit) {
                     {{ habitIsComplete(habit.name) ? 'انجام شده' : 'انجام نشده' }}
                 </p>
 
-                <button type="button" :disabled="busyAction" @click="toggleCompletion(habit)">
+                <button type="button" @click="toggleCompletion(habit)">
                     ثبت وضعیت امروز
                 </button>
 
@@ -227,7 +202,7 @@ function getSchedule(habit) {
                     ویرایش
                 </NuxtLink>
 
-                <button type="button" :disabled="busyAction" @click="removeSelectedHabit(habit)">
+                <button type="button" @click="removeSelectedHabit(habit)">
                     حذف
                 </button>
 
