@@ -36,9 +36,6 @@ function leaveAccount() {
                 خانه
             </NuxtLink>
 
-            <NuxtLink to="/habits/new">
-                ایجاد عادت
-            </NuxtLink>
 
             <span>
                 {{ auth.userName }}
