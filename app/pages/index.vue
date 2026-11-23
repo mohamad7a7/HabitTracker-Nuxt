@@ -22,6 +22,8 @@ const todayDate = ref('')
 const deleteErrorMessage = ref('')
 const checkinSaveError = ref('')
 
+let midnightTimer = null
+
 const {
     data: habitsResult,
     pending: isLoadingHabits,
@@ -79,10 +81,6 @@ const checkinsErrorMessage = computed(function () {
         : ''
 })
 
-onMounted(function () {
-    todayDate.value = getTodayDate()
-})
-
 function getTodayDate() {
     const today = new Date()
 
@@ -92,6 +90,73 @@ function getTodayDate() {
 
     return year + '-' + month + '-' + day
 }
+
+function updateTodayDate() {
+    todayDate.value = getTodayDate()
+}
+
+function scheduleDateUpdate() {
+    clearTimeout(midnightTimer)
+
+    const now = new Date()
+
+    const nextMidnight = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1,
+        0,
+        0,
+        1
+    )
+
+    const delay = nextMidnight.getTime() - now.getTime()
+
+    midnightTimer = setTimeout(function () {
+        updateTodayDate()
+        scheduleDateUpdate()
+    }, delay)
+}
+
+function handleWindowFocus() {
+    updateTodayDate()
+    scheduleDateUpdate()
+}
+
+function handleVisibilityChange() {
+    if (document.visibilityState === 'visible') {
+        updateTodayDate()
+        scheduleDateUpdate()
+    }
+}
+
+onMounted(function () {
+    updateTodayDate()
+    scheduleDateUpdate()
+
+    window.addEventListener(
+        'focus',
+        handleWindowFocus
+    )
+
+    document.addEventListener(
+        'visibilitychange',
+        handleVisibilityChange
+    )
+})
+
+onUnmounted(function () {
+    clearTimeout(midnightTimer)
+
+    window.removeEventListener(
+        'focus',
+        handleWindowFocus
+    )
+
+    document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange
+    )
+})
 
 function isDueToday(habit) {
     if (!todayDate.value) {

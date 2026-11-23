@@ -1,6 +1,11 @@
 
 export default defineNuxtRouteMiddleware(function (to) {
     const nuxtApp = useNuxtApp()
+    const currentError = useError()
+
+    if (currentError.value) {
+        return
+    }
 
     const {
         auth,
