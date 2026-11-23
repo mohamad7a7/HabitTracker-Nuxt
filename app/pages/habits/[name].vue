@@ -2,152 +2,93 @@
 const route = useRoute()
 
 const {
-    inspectHabit,
-    storeHabit,
-    showError
-} = useApp()
+    getHabit,
+    updateHabit
+} = useHabit()
+
+const {
+    getErrorMessage
+} = useApi()
 
 const habitName = computed(function () {
-    return route.params.name
-})
-
-const habitFields = reactive({
-    title: '',
-    frequency: 'D',
-    start_date: '',
-    time: '',
-    once_date: '',
-    day_of_month: ''
+    return String(route.params.name || '')
 })
 
 const errorMessage = ref('')
+const isSaving = ref(false)
 
-function loadHabit() {
+const {
+    data: habitResult,
+    pending: isLoading,
+    error: loadError
+} = await useAsyncData(
+    computed(function () {
+        return 'habit-' + habitName.value
+    }),
+    function () {
+        return getHabit(habitName.value)
+    }
+)
 
+const loadErrorMessage = computed(function () {
+    if (!loadError.value) {
+        return ''
+    }
 
-    if (habitName.value === 'new') {
+    return getErrorMessage(loadError.value)
+})
+
+const initialData = computed(function () {
+    if (!habitResult.value || !habitResult.value.habit) {
+        return {}
+    }
+
+    return habitResult.value.habit
+})
+
+function submitHabit(habitData) {
+    if (
+        isSaving.value ||
+        isLoading.value ||
+        loadError.value ||
+        !habitResult.value
+    ) {
         return
     }
 
-    inspectHabit(habitName.value)
-        .then(function (result) {
-            const habit = result.habit
+    errorMessage.value = ''
+    isSaving.value = true
 
-            habitFields.title = habit.title || ''
-            habitFields.frequency = habit.frequency || 'D'
-            habitFields.start_date = habit.start_date || ''
-            habitFields.time = habit.time || ''
-            habitFields.once_date = habit.once_date || ''
-            habitFields.day_of_month = habit.day_of_month || ''
-        })
-        .catch(function (error) {
-            errorMessage.value = showError(error)
-        })
-}
-
-onMounted(function () {
-    loadHabit()
-})
-
-watch(habitName, function () {
-    loadHabit()
-})
-
-function submitHabit() {
-    storeHabit(
-        habitName.value === 'new' ? '' : habitName.value,
-        {
-            title: habitFields.title,
-            frequency: habitFields.frequency,
-            time: habitFields.time,
-
-            start_date: habitFields.frequency === 'D'
-                ? habitFields.start_date
-                : '',
-
-            once_date: habitFields.frequency === 'O'
-                ? habitFields.once_date
-                : '',
-
-            day_of_month: habitFields.frequency === 'M'
-                ? habitFields.day_of_month
-                : ''
-        }
+    updateHabit(
+        habitName.value,
+        habitData
     )
         .then(function () {
             return navigateTo('/')
         })
         .catch(function (error) {
-            errorMessage.value = showError(error)
+            errorMessage.value = getErrorMessage(error)
+        })
+        .finally(function () {
+            isSaving.value = false
         })
 }
 </script>
 
 <template>
     <main>
-        <h1>اطلاعات عادت</h1>
+        <h1>ویرایش عادت</h1>
 
-        <p v-if="errorMessage">
-            {{ errorMessage }}
+        <p v-if="isLoading">
+            در حال دریافت اطلاعات عادت...
         </p>
 
-        <form v-if="!errorMessage" @submit.prevent="submitHabit">
-            <div>
-                <label for="title">
-                    عنوان عادت
-                </label>
+        <p v-if="loadErrorMessage" role="alert">
+            {{ loadErrorMessage }}
+        </p>
 
-                <input id="title" v-model="habitFields.title" type="text" required />
-            </div>
-
-            <div>
-                <label for="frequency">
-                    تناوب عادت
-                </label>
-
-                <select id="frequency" v-model="habitFields.frequency" required>
-                    <option value="D">روزانه</option>
-                    <option value="O">یک‌باره</option>
-                    <option value="M">ماهانه</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="time">
-                    ساعت انجام
-                </label>
-
-                <input id="time" v-model="habitFields.time" type="time" required />
-            </div>
-
-            <div v-if="habitFields.frequency === 'D'">
-                <label for="start_date">
-                    تاریخ شروع
-                </label>
-
-                <input id="start_date" v-model="habitFields.start_date" type="date" required />
-            </div>
-
-            <div v-if="habitFields.frequency === 'O'">
-                <label for="once_date">
-                    تاریخ انجام
-                </label>
-
-                <input id="once_date" v-model="habitFields.once_date" type="date" required />
-            </div>
-
-            <div v-if="habitFields.frequency === 'M'">
-                <label for="day_of_month">
-                    روز ماه
-                </label>
-
-                <input id="day_of_month" v-model="habitFields.day_of_month" type="number" min="1" max="31" required />
-            </div>
-
-            <button type="submit">
-                ذخیره عادت
-            </button>
-        </form>
+        <HabitForm :initial-data="initialData" :loading="isSaving || isLoading || Boolean(loadError)"
+            :error-message="errorMessage" submit-text="ذخیره تغییرات" @submit="submitHabit" />
 
         <NuxtLink to="/">
             بازگشت
