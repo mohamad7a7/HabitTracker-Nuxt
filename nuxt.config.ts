@@ -14,8 +14,8 @@ export default defineNuxtConfig({
     },
 
     runtimeConfig: {
-        frappeBaseUrl: 'http://127.0.0.1:8000'
-    },
+    frappeBaseUrl: 'http://frappe.localhost:8000'
+},
 
     app: {
         head: {
