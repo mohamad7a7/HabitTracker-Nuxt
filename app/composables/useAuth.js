@@ -20,6 +20,11 @@ export function useAuth() {
         }
     })
 
+    function clearAuth() {
+        authState.value.userName = null
+        authState.value.checked = true
+    }
+
     function checkLogin() {
         return request(
             'frappe.auth.get_logged_user',
@@ -42,19 +47,22 @@ export function useAuth() {
                 return auth.value.isLoggedIn
             })
             .catch(function (error) {
-                authState.value.userName = null
-                authState.value.checked = true
+                const errorText = JSON.stringify(error).toLowerCase()
 
-                if (
-                    error &&
+                const isGuest =
+                    error.statusCode === 401 ||
                     (
-                        error.exc_type === 'PermissionError' ||
-                        error.statusCode === 401 ||
-                        error.statusCode === 403
+                        error.statusCode === 403 &&
+                        /login to access|not logged in|invalid session|not authenticated/.test(errorText)
                     )
-                ) {
+
+                if (isGuest) {
+                    clearAuth()
                     return false
                 }
+
+                authState.value.userName = null
+                authState.value.checked = false
 
                 return Promise.reject(error)
             })
@@ -84,6 +92,10 @@ export function useAuth() {
 
                 return auth.value.userName
             })
+            .catch(function (error) {
+                clearAuth()
+                return Promise.reject(error)
+            })
     }
 
     function signUp(username, password) {
@@ -104,16 +116,13 @@ export function useAuth() {
             'POST'
         )
             .then(function (result) {
-                authState.value.userName = null
-                authState.value.checked = true
-
+                clearAuth()
                 return result
             })
-    }
-
-    function clearAuth() {
-        authState.value.userName = null
-        authState.value.checked = true
+            .catch(function (error) {
+                clearAuth()
+                return Promise.reject(error)
+            })
     }
 
     return {
