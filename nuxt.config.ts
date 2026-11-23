@@ -1,18 +1,27 @@
+
 export default defineNuxtConfig({
-  compatibilityDate: '2025-07-15',
+    compatibilityDate: '2025-07-15',
 
-  devtools: {
-    enabled: true
-  },
+    ssr: true,
 
-  devServer: {
-    host: 'frappe.localhost',
-    port: 3000
-  },
+    devtools: {
+        enabled: true
+    },
 
-  runtimeConfig: {
-        public: {
-            frappeBaseUrl: process.env.NUXT_PUBLIC_FRAPPE_BASE_URL || 'http://127.0.0.1:8000'
+    devServer: {
+        host: 'frappe.localhost',
+        port: 3000
+    },
+
+    runtimeConfig: {
+        frappeBaseUrl: 'http://127.0.0.1:8000'
+    },
+
+    app: {
+        head: {
+            htmlAttrs: {
+                lang: 'fa'
+            }
         }
     }
 })
