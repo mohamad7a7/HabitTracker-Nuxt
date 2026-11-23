@@ -1,22 +1,34 @@
+
 export default defineNuxtRouteMiddleware(function (to) {
-    if (import.meta.server) {
-        return
-    }
-
     const {
-        userName,
-    } = useApp()
-
-    const isAuthPage = to.path === '/auth'
+        auth,
+        checkLogin
+    } = useAuth()
 
     function checkAccess() {
-        if (!userName.value && !isAuthPage) {
+        const isAuthPage = to.path === '/auth'
+
+        if (!auth.value.isLoggedIn && !isAuthPage) {
             return navigateTo('/auth')
         }
 
-        if (userName.value && isAuthPage) {
+        if (auth.value.isLoggedIn && isAuthPage) {
             return navigateTo('/')
         }
     }
 
+    if (auth.value.checked) {
+        return checkAccess()
+    }
+
+    return checkLogin()
+        .then(function () {
+            return checkAccess()
+        })
+        .catch(function () {
+            throw createError({
+                statusCode: 503,
+                statusMessage: 'ارتباط با سرور احراز هویت برقرار نشد.'
+            })
+        })
 })
