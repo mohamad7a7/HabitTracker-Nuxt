@@ -6,7 +6,8 @@ const {
 
 const {
     getCheckins,
-    saveCheckin
+    saveCheckin,
+    updateCheckinRecords
 } = useCheckIn()
 
 const {
@@ -43,8 +44,7 @@ const {
 const {
     data: checkinsResult,
     pending: isLoadingCheckins,
-    error: checkinsError,
-    refresh: refreshCheckins
+    error: checkinsError
 } = await useAsyncData(
     'dashboard-checkins',
     function () {
@@ -161,7 +161,9 @@ function toggleCompletion(habit) {
         return
     }
 
-    todayDate.value = getTodayDate()
+    const checkinDate = getTodayDate()
+
+    todayDate.value = checkinDate
 
     const nextStatus = !habitIsComplete(habit.name)
 
@@ -170,11 +172,22 @@ function toggleCompletion(habit) {
 
     saveCheckin(
         habit.name,
-        todayDate.value,
+        checkinDate,
         nextStatus
     )
         .then(function () {
-            return refreshCheckins()
+            checkinsResult.value = Object.assign(
+                {},
+                checkinsResult.value,
+                {
+                    checkins: updateCheckinRecords(
+                        dailyRecords.value,
+                        habit.name,
+                        checkinDate,
+                        nextStatus
+                    )
+                }
+            )
         })
         .catch(function (error) {
             checkinSaveError.value = getErrorMessage(error)
@@ -189,9 +202,7 @@ function toggleCompletion(habit) {
 }
 
 function removeHabit(habit) {
-    if (
-        deletingHabits.value.includes(habit.name)
-    ) {
+    if (deletingHabits.value.includes(habit.name)) {
         return
     }
 
@@ -270,13 +281,9 @@ function removeHabit(habit) {
 
         <section v-if="habitCards.length">
             <article v-for="habit in habitCards" :key="habit.name">
-                <h2>
-                    {{ habit.title }}
-                </h2>
+                <h2>{{ habit.title }}</h2>
 
-                <p>
-                    {{ getHabitInfo(habit) }}
-                </p>
+                <p>{{ getHabitInfo(habit) }}</p>
 
                 <p>
                     ساعت: {{ habit.time }}
