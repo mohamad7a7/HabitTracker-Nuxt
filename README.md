@@ -1,75 +1,139 @@
-# Nuxt Minimal Starter
+# HabitTracker
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+پروژه مدیریت عادت‌ها با استفاده از Nuxt 4 و Frappe 16.
 
-## Setup
+این پروژه از Server-Side Rendering (SSR) استفاده می‌کند و ارتباط با سرور Frappe از طریق API داخلی Nuxt انجام می‌شود.
 
-Make sure to install dependencies:
+## تکنولوژی‌ها
+
+- Nuxt 4
+- Vue 3
+- Frappe 16
+- JavaScript
+- Session-Based Authentication
+- Server-Side Rendering
+
+## پیش‌نیازها
+
+- Node.js
+- npm
+- سرور Frappe فعال
+- سایت Frappe در دسترس
+
+## نصب پروژه
+
+ابتدا وابستگی‌ها را نصب کنید:
 
 ```bash
-# npm
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
 
-## Development Server
+## تنظیمات محیطی
 
-Start the development server on `http://localhost:3000`:
+فایل `.env.example` را کپی کنید و نام فایل جدید را `.env` قرار دهید.
+
+مقدار آدرس Frappe را در فایل `.env` تنظیم کنید:
+
+```env
+NUXT_FRAPPE_BASE_URL=http://frappe.localhost:8000
+```
+
+این آدرس باید با Host و Port واقعی سایت Frappe مطابقت داشته باشد.
+
+## اجرای محیط توسعه
 
 ```bash
-# npm
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+آدرس برنامه:
 
-Build the application for production:
+```text
+http://frappe.localhost:3000
+```
+
+## ساخت نسخه Production
 
 ```bash
-# npm
 npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
 ```
 
-Locally preview production build:
+## اجرای نسخه Production
 
 ```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
+node .output/server/index.mjs
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+برای مشاهده نسخه Production در محیط محلی نیز می‌توانید اجرا کنید:
+
+```bash
+npm run preview
+```
+
+## ساختار پروژه
+
+```text
+HabitTracker-Nuxt/
+│
+├── app/
+│   ├── components/
+│   │   ├── AppHeader.vue
+│   │   └── HabitForm.vue
+│   │
+│   ├── composables/
+│   │   ├── useApi.js
+│   │   ├── useAuth.js
+│   │   ├── useHabit.js
+│   │   └── useCheckIn.js
+│   │
+│   ├── layouts/
+│   │   └── default.vue
+│   │
+│   ├── middleware/
+│   │   └── auth.global.js
+│   │
+│   ├── pages/
+│   │   ├── auth.vue
+│   │   ├── index.vue
+│   │   └── habits/
+│   │       ├── new.vue
+│   │       └── [name].vue
+│   │
+│   ├── app.vue
+│   └── error.vue
+│
+├── server/
+│   └── api/
+│       └── frappe/
+│           └── [...path].js
+│
+├── public/
+│
+├── .env
+├── .env.example
+├── nuxt.config.ts
+└── package.json
+```
+
+## احراز هویت
+
+احراز هویت پروژه با Session داخلی Frappe انجام می‌شود.
+
+کوکی نشست در درخواست‌های مرورگر و SSR از طریق مسیر واسط Nuxt به Frappe منتقل می‌شود.
+
+## ارتباط با Frappe
+
+درخواست‌های API از مسیر داخلی زیر ارسال می‌شوند:
+
+```text
+/api/frappe/api/method/
+```
+
+این مسیر درخواست‌ها را به سرور Frappe منتقل می‌کند.
+
+## نکات امنیتی
+
+- فایل `.env` را در Git ثبت نکنید.
+- اطلاعات ورود کاربران را در کدهای سمت مرورگر ذخیره نکنید.
+- احراز هویت بر اساس Session سرور Frappe انجام می‌شود.
+- تنظیمات CORS و CSRF باید متناسب با دامنه‌های محیط استقرار باشند.
