@@ -1,5 +1,7 @@
 
 export default defineNuxtRouteMiddleware(function (to) {
+    const nuxtApp = useNuxtApp()
+
     const {
         auth,
         checkLogin
@@ -9,11 +11,15 @@ export default defineNuxtRouteMiddleware(function (to) {
         const isAuthPage = to.path === '/auth'
 
         if (!auth.value.isLoggedIn && !isAuthPage) {
-            return navigateTo('/auth')
+            return nuxtApp.runWithContext(function () {
+                return navigateTo('/auth')
+            })
         }
 
         if (auth.value.isLoggedIn && isAuthPage) {
-            return navigateTo('/')
+            return nuxtApp.runWithContext(function () {
+                return navigateTo('/')
+            })
         }
     }
 
@@ -25,7 +31,12 @@ export default defineNuxtRouteMiddleware(function (to) {
         .then(function () {
             return checkAccess()
         })
-        .catch(function () {
+        .catch(function (error) {
+            console.error(
+                'Authentication Middleware Error:',
+                error
+            )
+
             throw createError({
                 statusCode: 503,
                 statusMessage: 'ارتباط با سرور احراز هویت برقرار نشد.'
