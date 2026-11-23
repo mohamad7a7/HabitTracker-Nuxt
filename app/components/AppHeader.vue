@@ -22,6 +22,8 @@ function leaveAccount() {
         })
         .catch(function (error) {
             errorMessage.value = getErrorMessage(error)
+
+            return navigateTo('/auth')
         })
         .finally(function () {
             isSigningOut.value = false
@@ -30,12 +32,15 @@ function leaveAccount() {
 </script>
 
 <template>
-    <header v-if="auth.isLoggedIn">
-        <nav>
+    <header>
+        <nav v-if="auth.isLoggedIn">
             <NuxtLink to="/">
                 خانه
             </NuxtLink>
 
+            <NuxtLink to="/habits/new">
+                ایجاد عادت
+            </NuxtLink>
 
             <span>
                 {{ auth.userName }}
