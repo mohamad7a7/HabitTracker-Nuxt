@@ -5,16 +5,19 @@ export function useAuth() {
         getErrorMessage
     } = useApi()
 
-    const userName = useState('habitUserName', function () {
-        return null
+    const authState = useState('habitAuthState', function () {
+        return {
+            userName: null,
+            checked: false
+        }
     })
 
-    const authChecked = useState('habitAuthChecked', function () {
-        return false
-    })
-
-    const isLoggedIn = computed(function () {
-        return Boolean(userName.value)
+    const auth = computed(function () {
+        return {
+            userName: authState.value.userName,
+            checked: authState.value.checked,
+            isLoggedIn: Boolean(authState.value.userName)
+        }
     })
 
     function checkLogin() {
@@ -27,20 +30,20 @@ export function useAuth() {
                 if (result && result !== 'Guest') {
                     const suffix = '@users.habittracker.invalid'
 
-                    userName.value = result.endsWith(suffix)
+                    authState.value.userName = result.endsWith(suffix)
                         ? result.slice(0, -suffix.length)
                         : result
                 } else {
-                    userName.value = null
+                    authState.value.userName = null
                 }
 
-                authChecked.value = true
+                authState.value.checked = true
 
-                return isLoggedIn.value
+                return auth.value.isLoggedIn
             })
             .catch(function (error) {
-                userName.value = null
-                authChecked.value = true
+                authState.value.userName = null
+                authState.value.checked = true
 
                 if (
                     error &&
@@ -58,8 +61,8 @@ export function useAuth() {
     }
 
     function signIn(username, password) {
-        userName.value = null
-        authChecked.value = false
+        authState.value.userName = null
+        authState.value.checked = false
 
         return request(
             'login',
@@ -79,7 +82,7 @@ export function useAuth() {
                     })
                 }
 
-                return userName.value
+                return auth.value.userName
             })
     }
 
@@ -101,22 +104,20 @@ export function useAuth() {
             'POST'
         )
             .then(function (result) {
-                userName.value = null
-                authChecked.value = true
+                authState.value.userName = null
+                authState.value.checked = true
 
                 return result
             })
     }
 
     function clearAuth() {
-        userName.value = null
-        authChecked.value = true
+        authState.value.userName = null
+        authState.value.checked = true
     }
 
     return {
-        userName,
-        authChecked,
-        isLoggedIn,
+        auth,
         checkLogin,
         signIn,
         signUp,
