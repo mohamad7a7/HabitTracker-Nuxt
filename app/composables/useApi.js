@@ -1,4 +1,3 @@
-
 export function useApi() {
     const requestFetch = useRequestFetch()
     const nuxtApp = useNuxtApp()
