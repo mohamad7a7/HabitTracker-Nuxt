@@ -17,7 +17,9 @@ const {
 const deletingHabits = ref([])
 const savingCheckins = ref([])
 
-const todayDate = ref('')
+const todayDate = useState('habitTodayDate', function () {
+    return getTodayDate()
+})
 
 const deleteErrorMessage = ref('')
 const checkinSaveError = ref('')
@@ -46,11 +48,12 @@ const {
 const {
     data: checkinsResult,
     pending: isLoadingCheckins,
-    error: checkinsError
+    error: checkinsError,
+    refresh: refreshCheckins
 } = await useAsyncData(
     'dashboard-checkins',
     function () {
-        return getCheckins()
+        return getCheckins(todayDate.value)
     },
     {
         default: function () {
@@ -92,7 +95,12 @@ function getTodayDate() {
 }
 
 function updateTodayDate() {
-    todayDate.value = getTodayDate()
+    const nextDate = getTodayDate()
+
+    if (todayDate.value !== nextDate) {
+        todayDate.value = nextDate
+        refreshCheckins()
+    }
 }
 
 function scheduleDateUpdate() {
@@ -228,7 +236,10 @@ function toggleCompletion(habit) {
 
     const checkinDate = getTodayDate()
 
-    todayDate.value = checkinDate
+    if (todayDate.value !== checkinDate) {
+        todayDate.value = checkinDate
+        refreshCheckins()
+    }
 
     const nextStatus = !habitIsComplete(habit.name)
 

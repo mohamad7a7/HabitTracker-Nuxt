@@ -39,9 +39,9 @@ function enterAccount() {
         return
     }
 
+    usernameInput.value = username
     isSubmitting.value = true
     submitAction.value = 'login'
-    usernameInput.value = username
 
     signIn(
         username,
@@ -77,9 +77,9 @@ function createAccount() {
         return
     }
 
+    usernameInput.value = username
     isSubmitting.value = true
     submitAction.value = 'register'
-    usernameInput.value = username
 
     signUp(
         username,
@@ -87,7 +87,23 @@ function createAccount() {
     )
         .then(function () {
             registrationDone.value = true
-            passwordInput.value = ''
+
+            return signIn(
+                username,
+                passwordInput.value
+            )
+                .then(function () {
+                    passwordInput.value = ''
+
+                    return navigateTo('/')
+                })
+                .catch(function (error) {
+                    passwordInput.value = ''
+
+                    errorText.value =
+                        'ثبت‌نام موفق بود، اما ورود خودکار انجام نشد. لطفاً با اطلاعات خود وارد شوید. ' +
+                        getErrorMessage(error)
+                })
         })
         .catch(function (error) {
             errorText.value = getErrorMessage(error)
@@ -125,7 +141,7 @@ function createAccount() {
             </p>
 
             <p v-if="registrationDone" role="status">
-                ثبت‌نام با موفقیت انجام شد. اکنون می‌توانید وارد شوید.
+                ثبت‌نام با موفقیت انجام شد.
             </p>
 
             <button type="submit" :disabled="isSubmitting">

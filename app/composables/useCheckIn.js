@@ -4,10 +4,16 @@ export function useCheckIn() {
         request
     } = useApi()
 
-    function getCheckins() {
+    function getCheckins(date) {
+        const filters = {}
+
+        if (date) {
+            filters.date = date
+        }
+
         return request(
             'habit_tracker_get_checkins',
-            {},
+            filters,
             'GET'
         )
     }
