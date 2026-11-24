@@ -22,7 +22,24 @@ const todayDate = useState('habitTodayDate', function () {
 })
 
 const deleteErrorMessage = ref('')
+const deleteSuccessMessage = ref('')
+
 const checkinSaveError = ref('')
+const checkinSaveSuccess = ref('')
+
+const actionMessages = {
+    deleteError: deleteErrorMessage,
+    deleteSuccess: deleteSuccessMessage,
+    checkinError: checkinSaveError,
+    checkinSuccess: checkinSaveSuccess
+}
+
+const messageTimers = {
+    deleteError: null,
+    deleteSuccess: null,
+    checkinError: null,
+    checkinSuccess: null
+}
 
 let midnightTimer = null
 
@@ -94,11 +111,39 @@ function getTodayDate() {
     return year + '-' + month + '-' + day
 }
 
+function clearActionMessage(messageName) {
+    clearTimeout(messageTimers[messageName])
+
+    messageTimers[messageName] = null
+    actionMessages[messageName].value = ''
+}
+
+function showActionMessage(messageName, message) {
+    clearActionMessage(messageName)
+
+    actionMessages[messageName].value = message
+
+    messageTimers[messageName] = setTimeout(function () {
+        actionMessages[messageName].value = ''
+        messageTimers[messageName] = null
+    }, 10000)
+}
+
+function clearActionMessages() {
+    Object.keys(actionMessages).forEach(function (messageName) {
+        clearActionMessage(messageName)
+    })
+}
+
 function updateTodayDate() {
     const nextDate = getTodayDate()
 
     if (todayDate.value !== nextDate) {
         todayDate.value = nextDate
+
+        clearActionMessage('checkinError')
+        clearActionMessage('checkinSuccess')
+
         refreshCheckins()
     }
 }
@@ -154,6 +199,7 @@ onMounted(function () {
 
 onUnmounted(function () {
     clearTimeout(midnightTimer)
+    clearActionMessages()
 
     window.removeEventListener(
         'focus',
@@ -234,6 +280,8 @@ function toggleCompletion(habit) {
         return
     }
 
+    clearActionMessages()
+
     const checkinDate = getTodayDate()
 
     if (todayDate.value !== checkinDate) {
@@ -243,7 +291,6 @@ function toggleCompletion(habit) {
 
     const nextStatus = !habitIsComplete(habit.name)
 
-    checkinSaveError.value = ''
     savingCheckins.value.push(habit.name)
 
     saveCheckin(
@@ -264,9 +311,17 @@ function toggleCompletion(habit) {
                     )
                 }
             )
+
+            showActionMessage(
+                'checkinSuccess',
+                'وضعیت عادت با موفقیت ثبت شد.'
+            )
         })
         .catch(function (error) {
-            checkinSaveError.value = getErrorMessage(error)
+            showActionMessage(
+                'checkinError',
+                getErrorMessage(error)
+            )
         })
         .finally(function () {
             savingCheckins.value = savingCheckins.value.filter(
@@ -290,22 +345,34 @@ function removeHabit(habit) {
         return
     }
 
-    deleteErrorMessage.value = ''
+    clearActionMessages()
+
     deletingHabits.value.push(habit.name)
 
     deleteHabit(habit.name)
         .then(function () {
-            return refreshHabits()
-        })
-        .then(function () {
-            if (habitsError.value) {
-                deleteErrorMessage.value = getErrorMessage(
-                    habitsError.value
-                )
-            }
+            habitsResult.value = Object.assign(
+                {},
+                habitsResult.value,
+                {
+                    habits: habitCards.value.filter(
+                        function (item) {
+                            return item.name !== habit.name
+                        }
+                    )
+                }
+            )
+
+            showActionMessage(
+                'deleteSuccess',
+                'عادت با موفقیت حذف شد.'
+            )
         })
         .catch(function (error) {
-            deleteErrorMessage.value = getErrorMessage(error)
+            showActionMessage(
+                'deleteError',
+                getErrorMessage(error)
+            )
         })
         .finally(function () {
             deletingHabits.value = deletingHabits.value.filter(
@@ -321,16 +388,20 @@ function removeHabit(habit) {
     <main>
         <h1>عادت‌های من</h1>
 
-        <NuxtLink to="/habits/new">
-            ایجاد عادت جدید
-        </NuxtLink>
-
         <p v-if="deleteErrorMessage" role="alert">
             {{ deleteErrorMessage }}
         </p>
 
+        <p v-if="deleteSuccessMessage" role="status">
+            {{ deleteSuccessMessage }}
+        </p>
+
         <p v-if="checkinSaveError" role="alert">
             {{ checkinSaveError }}
+        </p>
+
+        <p v-if="checkinSaveSuccess" role="status">
+            {{ checkinSaveSuccess }}
         </p>
 
         <p v-if="habitsErrorMessage" role="alert">
