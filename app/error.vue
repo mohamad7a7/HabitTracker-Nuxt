@@ -64,7 +64,7 @@ function goToLogin() {
 </script>
 
 <template>
-    <main dir="rtl">
+    <main>
         <h1>{{ errorTitle }}</h1>
 
         <p>
