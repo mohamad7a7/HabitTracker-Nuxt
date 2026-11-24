@@ -4,107 +4,102 @@ const props = defineProps({
         type: Object,
         default: function () {
             return {}
-        }
+        },
     },
+
     loading: {
         type: Boolean,
-        default: false
+        default: false,
     },
+
     errorMessage: {
         type: String,
-        default: ''
+        default: '',
     },
+
     submitText: {
         type: String,
-        default: 'ذخیره عادت'
-    }
+        default: 'ذخیره عادت',
+    },
 })
 
 const emit = defineEmits(['submit'])
 
-const habitFields = reactive({
-    title: '',
-    frequency: 'D',
-    start_date: '',
-    time: '',
-    once_date: '',
-    day_of_month: ''
-})
-
-const titleError = ref('')
-
-function fillFields(habit) {
-    habitFields.title = habit.title || ''
-    habitFields.frequency = habit.frequency || 'D'
-    habitFields.start_date = habit.start_date || ''
-    habitFields.time = habit.time || ''
-    habitFields.once_date = habit.once_date || ''
-    habitFields.day_of_month = habit.day_of_month || ''
-}
+const title = ref('')
+const frequency = ref('D')
+const startDate = ref('')
+const time = ref('')
+const onceDate = ref('')
+const dayOfMonth = ref('')
 
 watch(
     function () {
         return props.initialData
     },
-    function (habit) {
-        fillFields(habit)
+    function (data) {
+        title.value = data.title || ''
+        frequency.value = data.frequency || 'D'
+        startDate.value = data.start_date || ''
+        time.value = data.time || ''
+        onceDate.value = data.once_date || ''
+        dayOfMonth.value = data.day_of_month ?? ''
     },
     {
         immediate: true,
-        deep: true
-    }
+    },
 )
 
-function submitHabit() {
-    const title = habitFields.title.trim()
+function submitForm() {
+    const cleanTitle = title.value.trim()
 
-    titleError.value = ''
-
-    if (!title) {
-        titleError.value = 'عنوان عادت را وارد کنید.'
+    if (!cleanTitle) {
         return
     }
 
-    emit('submit', {
-        title: title,
-        frequency: habitFields.frequency,
-        time: habitFields.time,
+    if (cleanTitle.length > 100) {
+        return
+    }
 
-        start_date: habitFields.frequency === 'D'
-            ? habitFields.start_date
-            : '',
+    const habitData = {
+        title: cleanTitle,
+        frequency: frequency.value,
+        time: time.value,
+    }
 
-        once_date: habitFields.frequency === 'O'
-            ? habitFields.once_date
-            : '',
+    if (frequency.value === 'D') {
+        habitData.start_date = startDate.value
+    } else if (frequency.value === 'O') {
+        habitData.once_date = onceDate.value
+    } else if (frequency.value === 'M') {
+        const day = Number(dayOfMonth.value)
 
-        day_of_month: habitFields.frequency === 'M'
-            ? habitFields.day_of_month
-            : ''
-    })
+        if (
+            !Number.isInteger(day) ||
+            day < 1 ||
+            day > 31
+        ) {
+            return
+        }
+
+        habitData.day_of_month = day
+    }
+
+    emit('submit', habitData)
 }
 </script>
 
 <template>
-    <form @submit.prevent="submitHabit">
+    <form @submit.prevent="submitForm">
         <div>
-            <label for="title">
-                عنوان عادت
-            </label>
+            <label for="habit-title">عنوان عادت:</label>
 
-            <input id="title" v-model="habitFields.title" type="text" required @input="titleError = ''" />
-
-            <p v-if="titleError" role="alert">
-                {{ titleError }}
-            </p>
+            <input id="habit-title" v-model="title" type="text" maxlength="100" required />
         </div>
 
         <div>
-            <label for="frequency">
-                تناوب عادت
-            </label>
+            <label for="habit-frequency">نوع تکرار:</label>
 
-            <select id="frequency" v-model="habitFields.frequency" required>
+            <select id="habit-frequency" v-model="frequency" required>
                 <option value="D">روزانه</option>
                 <option value="O">یک‌باره</option>
                 <option value="M">ماهانه</option>
@@ -112,35 +107,28 @@ function submitHabit() {
         </div>
 
         <div>
-            <label for="time">
-                ساعت انجام
-            </label>
+            <label for="habit-time">ساعت انجام:</label>
 
-            <input id="time" v-model="habitFields.time" type="time" required />
+            <input id="habit-time" v-model="time" type="time" required />
         </div>
 
-        <div v-if="habitFields.frequency === 'D'">
-            <label for="start_date">
-                تاریخ شروع
-            </label>
+        <div v-if="frequency === 'D'">
+            <label for="habit-start-date">تاریخ شروع:</label>
 
-            <input id="start_date" v-model="habitFields.start_date" type="date" required />
+            <input id="habit-start-date" v-model="startDate" type="date" required />
         </div>
 
-        <div v-if="habitFields.frequency === 'O'">
-            <label for="once_date">
-                تاریخ انجام
-            </label>
+        <div v-if="frequency === 'O'">
+            <label for="habit-once-date">تاریخ انجام:</label>
 
-            <input id="once_date" v-model="habitFields.once_date" type="date" required />
+            <input id="habit-once-date" v-model="onceDate" type="date" required />
         </div>
 
-        <div v-if="habitFields.frequency === 'M'">
-            <label for="day_of_month">
-                روز ماه
-            </label>
+        <div v-if="frequency === 'M'">
+            <label for="habit-day-of-month">روز ماه:</label>
 
-            <input id="day_of_month" v-model="habitFields.day_of_month" type="number" min="1" max="31" required />
+            <input id="habit-day-of-month" v-model.number="dayOfMonth" type="number" min="1" max="31" step="1"
+                required />
         </div>
 
         <p v-if="errorMessage" role="alert">
