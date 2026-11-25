@@ -227,9 +227,16 @@ function isDueToday(habit) {
     }
 
     if (habit.frequency === 'M') {
-        const todayDay = Number(todayDate.value.split('-')[2])
+        const [year, month, day] = todayDate.value.split('-').map(Number)
 
-        return Number(habit.day_of_month) === todayDay
+        const lastDay = new Date(year, month, 0).getDate()
+
+        const dueDay = Math.min(
+            Number(habit.day_of_month),
+            lastDay
+        )
+
+        return dueDay === day
     }
 
     return false
