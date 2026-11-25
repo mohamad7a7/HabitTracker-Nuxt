@@ -30,6 +30,21 @@ const {
     }
 )
 
+if (
+    loadError.value &&
+    Number(
+        loadError.value.statusCode ||
+        loadError.value.status ||
+        0
+    ) === 404
+) {
+    throw createError({
+        statusCode: 404,
+        statusMessage: 'Habit Not Found',
+        fatal: true
+    })
+}
+
 const loadErrorMessage = computed(function () {
     if (!loadError.value) {
         return ''
@@ -51,7 +66,8 @@ function submitHabit(habitData) {
         isSaving.value ||
         isLoading.value ||
         loadError.value ||
-        !habitResult.value
+        !habitResult.value ||
+        !habitResult.value.habit
     ) {
         return
     }
@@ -83,11 +99,11 @@ function submitHabit(habitData) {
             در حال دریافت اطلاعات عادت...
         </p>
 
-        <p v-if="loadErrorMessage" role="alert">
+        <p v-else-if="loadErrorMessage" role="alert">
             {{ loadErrorMessage }}
         </p>
 
-        <HabitForm :initial-data="initialData" :loading="isSaving || isLoading || Boolean(loadError)"
+        <HabitForm v-else-if="habitResult && habitResult.habit" :initial-data="initialData" :loading="isSaving"
             :error-message="errorMessage" submit-text="ذخیره تغییرات" @submit="submitHabit" />
 
         <NuxtLink to="/">
