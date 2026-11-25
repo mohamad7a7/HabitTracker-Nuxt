@@ -10,87 +10,95 @@ const authForm = ref(null)
 const usernameInput = ref('')
 const passwordInput = ref('')
 
-const errorText = ref('')
-const registrationDone = ref(false)
+const authMode = ref('login')
 
+const errorText = ref('')
 const isSubmitting = ref(false)
-const submitAction = ref('')
 
 function clearMessages() {
     errorText.value = ''
-    registrationDone.value = false
 }
 
-function enterAccount() {
+function switchAuthMode(mode) {
     if (isSubmitting.value) {
         return
     }
 
+    authMode.value = mode
+    passwordInput.value = ''
+
+    clearMessages()
+}
+
+function validateForm() {
     clearMessages()
 
     if (!authForm.value.reportValidity()) {
-        return
+        return null
     }
 
     const username = usernameInput.value.trim()
 
     if (!username) {
         errorText.value = 'نام کاربری را وارد کنید.'
-        return
+        return null
+    }
+
+    if (
+        authMode.value === 'register' &&
+        Array.from(passwordInput.value).length < 8
+    ) {
+        errorText.value = 'رمز عبور باید حداقل ۸ کاراکتر داشته باشد.'
+        return null
     }
 
     usernameInput.value = username
-    isSubmitting.value = true
-    submitAction.value = 'login'
 
-    signIn(
-        username,
-        passwordInput.value
-    )
-        .then(function () {
-            return navigateTo('/')
-        })
-        .catch(function (error) {
-            errorText.value = getErrorMessage(error)
-        })
-        .finally(function () {
-            isSubmitting.value = false
-            submitAction.value = ''
-        })
+    return {
+        username: username,
+        password: passwordInput.value
+    }
 }
 
-function createAccount() {
+function submitForm() {
     if (isSubmitting.value) {
         return
     }
 
-    clearMessages()
+    const formData = validateForm()
 
-    if (!authForm.value.reportValidity()) {
+    if (!formData) {
         return
     }
 
-    const username = usernameInput.value.trim()
-
-    if (!username) {
-        errorText.value = 'نام کاربری را وارد کنید.'
-        return
-    }
-
-    usernameInput.value = username
     isSubmitting.value = true
-    submitAction.value = 'register'
+
+    if (authMode.value === 'login') {
+        signIn(
+            formData.username,
+            formData.password
+        )
+            .then(function () {
+                return navigateTo('/')
+            })
+            .catch(function (error) {
+                errorText.value = getErrorMessage(error)
+            })
+            .finally(function () {
+                isSubmitting.value = false
+            })
+
+        return
+    }
 
     signUp(
-        username,
-        passwordInput.value
+        formData.username,
+        formData.password
     )
         .then(function () {
-            registrationDone.value = true
-
             return signIn(
-                username,
-                passwordInput.value
+                formData.username,
+                formData.password
             )
                 .then(function () {
                     passwordInput.value = ''
@@ -101,7 +109,7 @@ function createAccount() {
                     passwordInput.value = ''
 
                     errorText.value =
-                        'ثبت‌نام موفق بود، اما ورود خودکار انجام نشد. لطفاً با اطلاعات خود وارد شوید. ' +
+                        'ثبت‌نام موفق بود، اما ورود خودکار انجام نشد. لطفاً وارد حساب شوید. ' +
                         getErrorMessage(error)
                 })
         })
@@ -110,7 +118,6 @@ function createAccount() {
         })
         .finally(function () {
             isSubmitting.value = false
-            submitAction.value = ''
         })
 }
 </script>
@@ -119,7 +126,17 @@ function createAccount() {
     <main>
         <h1>حساب کاربری</h1>
 
-        <form ref="authForm" @submit.prevent="enterAccount">
+        <div>
+            <button type="button" :disabled="isSubmitting" @click="switchAuthMode('login')">
+                ورود
+            </button>
+
+            <button type="button" :disabled="isSubmitting" @click="switchAuthMode('register')">
+                ثبت‌نام
+            </button>
+        </div>
+
+        <form ref="authForm" @submit.prevent="submitForm">
             <div>
                 <label for="username">
                     نام کاربری
@@ -133,30 +150,29 @@ function createAccount() {
                     رمز عبور
                 </label>
 
-                <input id="password" v-model="passwordInput" type="password" autocomplete="current-password" required />
+                <input id="password" v-model="passwordInput" type="password" :autocomplete="authMode === 'register'
+                        ? 'new-password'
+                        : 'current-password'
+                    " required />
+
+                <p v-if="authMode === 'register'">
+                    رمز عبور باید حداقل ۸ کاراکتر داشته باشد.
+                </p>
             </div>
 
             <p v-if="errorText" role="alert">
                 {{ errorText }}
             </p>
 
-            <p v-if="registrationDone" role="status">
-                ثبت‌نام با موفقیت انجام شد.
-            </p>
-
             <button type="submit" :disabled="isSubmitting">
                 {{
-                    submitAction === 'login'
-                        ? 'در حال ورود...'
-                        : 'ورود'
-                }}
-            </button>
-
-            <button type="button" :disabled="isSubmitting" @click="createAccount">
-                {{
-                    submitAction === 'register'
-                        ? 'در حال ثبت‌نام...'
-                        : 'ثبت‌نام'
+                    isSubmitting
+                        ? authMode === 'login'
+                            ? 'در حال ورود...'
+                            : 'در حال ثبت‌نام...'
+                        : authMode === 'login'
+                            ? 'ورود'
+                            : 'ایجاد حساب کاربری'
                 }}
             </button>
         </form>
