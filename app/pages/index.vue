@@ -14,34 +14,15 @@ const {
     getErrorMessage
 } = useApi()
 
+const {
+    messages,
+    showMessage,
+    clearMessage,
+    clearAllMessages
+} = useToast()
+
 const deletingHabits = ref([])
 const savingCheckins = ref([])
-
-const todayDate = useState('habitTodayDate', function () {
-    return ''
-})
-
-const deleteErrorMessage = ref('')
-const deleteSuccessMessage = ref('')
-
-const checkinSaveError = ref('')
-const checkinSaveSuccess = ref('')
-
-const actionMessages = {
-    deleteError: deleteErrorMessage,
-    deleteSuccess: deleteSuccessMessage,
-    checkinError: checkinSaveError,
-    checkinSuccess: checkinSaveSuccess
-}
-
-const messageTimers = {
-    deleteError: null,
-    deleteSuccess: null,
-    checkinError: null,
-    checkinSuccess: null
-}
-
-let midnightTimer = null
 
 const {
     data: habitsResult,
@@ -83,6 +64,15 @@ const {
     }
 )
 
+const {
+    todayDate
+} = useToday(function () {
+    clearMessage('checkinError')
+    clearMessage('checkinSuccess')
+
+    refreshCheckins()
+})
+
 const habitCards = computed(function () {
     return habitsResult.value.habits || []
 })
@@ -101,120 +91,6 @@ const checkinsErrorMessage = computed(function () {
     return checkinsError.value
         ? getErrorMessage(checkinsError.value)
         : ''
-})
-
-function getTodayDate() {
-    const today = new Date()
-
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-
-    return year + '-' + month + '-' + day
-}
-
-function clearActionMessage(messageName) {
-    clearTimeout(messageTimers[messageName])
-
-    messageTimers[messageName] = null
-    actionMessages[messageName].value = ''
-}
-
-function showActionMessage(messageName, message) {
-    clearActionMessage(messageName)
-
-    actionMessages[messageName].value = message
-
-    messageTimers[messageName] = setTimeout(function () {
-        actionMessages[messageName].value = ''
-        messageTimers[messageName] = null
-    }, 10000)
-}
-
-function clearActionMessages() {
-    Object.keys(actionMessages).forEach(function (messageName) {
-        clearActionMessage(messageName)
-    })
-}
-
-function updateTodayDate() {
-    const nextDate = getTodayDate()
-
-    if (todayDate.value !== nextDate) {
-        todayDate.value = nextDate
-
-        clearActionMessage('checkinError')
-        clearActionMessage('checkinSuccess')
-
-        refreshCheckins()
-    }
-}
-
-function scheduleDateUpdate() {
-    clearTimeout(midnightTimer)
-
-    const now = new Date()
-
-    const nextMidnight = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() + 1,
-        0,
-        0,
-        1
-    )
-
-    const delay = nextMidnight.getTime() - now.getTime()
-
-    midnightTimer = setTimeout(function () {
-        updateTodayDate()
-        scheduleDateUpdate()
-    }, delay)
-}
-
-function handleWindowFocus() {
-    updateTodayDate()
-    scheduleDateUpdate()
-}
-
-function handleVisibilityChange() {
-    if (document.visibilityState === 'visible') {
-        updateTodayDate()
-        scheduleDateUpdate()
-    }
-}
-
-onMounted(function () {
-    todayDate.value = getTodayDate()
-
-    refreshCheckins()
-
-    scheduleDateUpdate()
-
-    window.addEventListener(
-        'focus',
-        handleWindowFocus
-    )
-
-    document.addEventListener(
-        'visibilitychange',
-        handleVisibilityChange
-    )
-})
-
-onUnmounted(function () {
-    clearTimeout(midnightTimer)
-    clearActionMessages()
-
-    window.removeEventListener(
-        'focus',
-        handleWindowFocus
-    )
-
-    document.removeEventListener(
-        'visibilitychange',
-        handleVisibilityChange
-    )
 })
 
 function isDueToday(habit) {
@@ -283,6 +159,14 @@ function getHabitInfo(habit) {
         schedule
 }
 
+function retryHabits() {
+    return refreshHabits()
+}
+
+function retryCheckins() {
+    return refreshCheckins()
+}
+
 function toggleCompletion(habit) {
     if (
         savingCheckins.value.includes(habit.name) ||
@@ -292,12 +176,16 @@ function toggleCompletion(habit) {
         return
     }
 
-    clearActionMessages()
+    clearAllMessages()
 
     const checkinDate = getTodayDate()
 
     if (todayDate.value !== checkinDate) {
         todayDate.value = checkinDate
+
+        clearMessage('checkinError')
+        clearMessage('checkinSuccess')
+
         refreshCheckins()
     }
 
@@ -324,13 +212,13 @@ function toggleCompletion(habit) {
                 }
             )
 
-            showActionMessage(
+            showMessage(
                 'checkinSuccess',
                 'وضعیت عادت با موفقیت ثبت شد.'
             )
         })
         .catch(function (error) {
-            showActionMessage(
+            showMessage(
                 'checkinError',
                 getErrorMessage(error)
             )
@@ -357,7 +245,7 @@ function removeHabit(habit) {
         return
     }
 
-    clearActionMessages()
+    clearAllMessages()
 
     deletingHabits.value.push(habit.name)
 
@@ -375,13 +263,13 @@ function removeHabit(habit) {
                 }
             )
 
-            showActionMessage(
+            showMessage(
                 'deleteSuccess',
                 'عادت با موفقیت حذف شد.'
             )
         })
         .catch(function (error) {
-            showActionMessage(
+            showMessage(
                 'deleteError',
                 getErrorMessage(error)
             )
@@ -400,20 +288,20 @@ function removeHabit(habit) {
     <main>
         <h1>عادت‌های من</h1>
 
-        <p v-if="deleteErrorMessage" role="alert">
-            {{ deleteErrorMessage }}
+        <p v-if="messages.deleteError" role="alert">
+            {{ messages.deleteError }}
         </p>
 
-        <p v-if="deleteSuccessMessage" role="status">
-            {{ deleteSuccessMessage }}
+        <p v-if="messages.deleteSuccess" role="status">
+            {{ messages.deleteSuccess }}
         </p>
 
-        <p v-if="checkinSaveError" role="alert">
-            {{ checkinSaveError }}
+        <p v-if="messages.checkinError" role="alert">
+            {{ messages.checkinError }}
         </p>
 
-        <p v-if="checkinSaveSuccess" role="status">
-            {{ checkinSaveSuccess }}
+        <p v-if="messages.checkinSuccess" role="status">
+            {{ messages.checkinSuccess }}
         </p>
 
         <p v-if="habitsErrorMessage" role="alert">
@@ -421,10 +309,18 @@ function removeHabit(habit) {
             {{ habitsErrorMessage }}
         </p>
 
+        <button v-if="habitsErrorMessage" type="button" :disabled="isLoadingHabits" @click="retryHabits">
+            {{ isLoadingHabits ? 'در حال تلاش...' : 'تلاش مجدد برای دریافت عادت‌ها' }}
+        </button>
+
         <p v-if="checkinsErrorMessage" role="alert">
             خطا در دریافت وضعیت عادت‌ها:
             {{ checkinsErrorMessage }}
         </p>
+
+        <button v-if="checkinsErrorMessage" type="button" :disabled="isLoadingCheckins" @click="retryCheckins">
+            {{ isLoadingCheckins ? 'در حال تلاش...' : 'تلاش مجدد برای دریافت وضعیت عادت‌ها' }}
+        </button>
 
         <p v-if="isLoadingHabits">
             در حال دریافت عادت‌ها...
