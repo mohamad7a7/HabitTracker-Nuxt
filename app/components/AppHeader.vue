@@ -1,11 +1,9 @@
 <script setup>
 const {
     auth,
-    signOut,
-    getErrorMessage
+    signOut
 } = useAuth()
 
-const errorMessage = ref('')
 const isSigningOut = ref(false)
 
 function leaveAccount() {
@@ -13,7 +11,6 @@ function leaveAccount() {
         return
     }
 
-    errorMessage.value = ''
     isSigningOut.value = true
 
     signOut()
@@ -21,7 +18,7 @@ function leaveAccount() {
             return navigateTo('/auth')
         })
         .catch(function (error) {
-            errorMessage.value = getErrorMessage(error)
+            console.error('Logout failed:', error)
 
             return navigateTo('/auth')
         })
@@ -50,9 +47,5 @@ function leaveAccount() {
                 {{ isSigningOut ? 'در حال خروج...' : 'خروج' }}
             </button>
         </nav>
-
-        <p v-if="errorMessage" role="alert">
-            {{ errorMessage }}
-        </p>
     </header>
 </template>
