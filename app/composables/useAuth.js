@@ -1,16 +1,20 @@
 
+import {
+    isExpiredSession
+} from '../utils/apiErrors'
+
 export function useAuth() {
     const {
         request,
         getErrorMessage
     } = useApi()
 
-    const authState = useState('habitAuthState', function () {
-        return {
-            userName: null,
-            checked: false
-        }
-    })
+    const {
+        authState,
+        setUserName,
+        setChecked,
+        clearAuth
+    } = useAuthState()
 
     const auth = computed(function () {
         return {
@@ -19,11 +23,6 @@ export function useAuth() {
             isLoggedIn: Boolean(authState.value.userName)
         }
     })
-
-    function clearAuth() {
-        authState.value.userName = null
-        authState.value.checked = true
-    }
 
     function checkLogin() {
         return request(
@@ -35,42 +34,40 @@ export function useAuth() {
                 if (result && result !== 'Guest') {
                     const suffix = '@users.habittracker.invalid'
 
-                    authState.value.userName = result.endsWith(suffix)
-                        ? result.slice(0, -suffix.length)
-                        : result
+                    setUserName(
+                        result.endsWith(suffix)
+                            ? result.slice(0, -suffix.length)
+                            : result
+                    )
                 } else {
-                    authState.value.userName = null
+                    setUserName(null)
                 }
 
-                authState.value.checked = true
+                setChecked(true)
 
                 return auth.value.isLoggedIn
             })
             .catch(function (error) {
-                const errorText = JSON.stringify(error).toLowerCase()
-
-                const isGuest =
-                    error.statusCode === 401 ||
-                    (
-                        error.statusCode === 403 &&
-                        /login to access|not logged in|invalid session|not authenticated/.test(errorText)
+                if (
+                    isExpiredSession(
+                        error,
+                        'frappe.auth.get_logged_user'
                     )
-
-                if (isGuest) {
+                ) {
                     clearAuth()
                     return false
                 }
 
-                authState.value.userName = null
-                authState.value.checked = false
+                setUserName(null)
+                setChecked(false)
 
                 return Promise.reject(error)
             })
     }
 
     function signIn(username, password) {
-        authState.value.userName = null
-        authState.value.checked = false
+        setUserName(null)
+        setChecked(false)
 
         return request(
             'login',
