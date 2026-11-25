@@ -51,7 +51,7 @@ const {
 } = useAsyncData(
     'dashboard-checkins',
     function () {
-        return getCheckins(todayDate.value)
+        return getCheckins()
     },
     {
         server: false,
@@ -93,7 +93,7 @@ const checkinsErrorMessage = computed(function () {
         : ''
 })
 
-function isDueToday(habit) {
+function canCheckIn(habit) {
     if (!todayDate.value) {
         return false
     }
@@ -104,7 +104,10 @@ function isDueToday(habit) {
     }
 
     if (habit.frequency === 'O') {
-        return habit.once_date === todayDate.value
+        return Boolean(
+            habit.once_date &&
+            habit.once_date <= todayDate.value
+        )
     }
 
     if (habit.frequency === 'M') {
@@ -123,10 +126,18 @@ function isDueToday(habit) {
     return false
 }
 
-function habitIsComplete(habitName) {
+function getCheckinDate(habit) {
+    if (habit.frequency === 'O') {
+        return habit.once_date
+    }
+
+    return todayDate.value
+}
+
+function habitIsComplete(habitName, date) {
     const record = dailyRecords.value.find(function (item) {
         return item.habit === habitName &&
-            item.date === todayDate.value
+            item.date === date
     })
 
     return Boolean(record && Number(record.is_done) === 1)
@@ -170,26 +181,23 @@ function retryCheckins() {
 function toggleCompletion(habit) {
     if (
         savingCheckins.value.includes(habit.name) ||
-        !isDueToday(habit) ||
-        !todayDate.value
+        !canCheckIn(habit)
     ) {
+        return
+    }
+
+    const checkinDate = getCheckinDate(habit)
+
+    if (!checkinDate) {
         return
     }
 
     clearAllMessages()
 
-    const checkinDate = getTodayDate()
-
-    if (todayDate.value !== checkinDate) {
-        todayDate.value = checkinDate
-
-        clearMessage('checkinError')
-        clearMessage('checkinSuccess')
-
-        refreshCheckins()
-    }
-
-    const nextStatus = !habitIsComplete(habit.name)
+    const nextStatus = !habitIsComplete(
+        habit.name,
+        checkinDate
+    )
 
     savingCheckins.value.push(habit.name)
 
@@ -344,10 +352,17 @@ function removeHabit(habit) {
                     ساعت: {{ habit.time }}
                 </p>
 
-                <template v-if="todayDate && isDueToday(habit)">
+                <template v-if="todayDate && canCheckIn(habit)">
                     <p>
-                        وضعیت امروز:
-                        {{ habitIsComplete(habit.name) ? 'انجام شده' : 'انجام نشده' }}
+                        {{ habit.frequency === 'O' ? 'وضعیت عادت:' : 'وضعیت امروز:' }}
+                        {{
+                            habitIsComplete(
+                                habit.name,
+                                getCheckinDate(habit)
+                            )
+                                ? 'انجام شده'
+                                : 'انجام نشده'
+                        }}
                     </p>
 
                     <button type="button" :disabled="savingCheckins.includes(habit.name) ||
@@ -357,12 +372,23 @@ function removeHabit(habit) {
                         {{
                             savingCheckins.includes(habit.name)
                                 ? 'در حال ثبت...'
-                                : habitIsComplete(habit.name)
+                                : habitIsComplete(
+                                    habit.name,
+                                    getCheckinDate(habit)
+                                )
                                     ? 'ثبت انجام نشده'
                                     : 'ثبت انجام شده'
                         }}
                     </button>
                 </template>
+
+                <p v-else-if="todayDate && habit.frequency === 'O'">
+                    {{
+                        habit.once_date > todayDate
+                            ? 'تاریخ انجام این عادت هنوز نرسیده است.'
+                            : 'تاریخ انجام این عادت مشخص نشده است.'
+                    }}
+                </p>
 
                 <p v-else-if="todayDate">
                     امروز زمان انجام این عادت نیست.
