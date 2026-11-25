@@ -18,7 +18,7 @@ const deletingHabits = ref([])
 const savingCheckins = ref([])
 
 const todayDate = useState('habitTodayDate', function () {
-    return getTodayDate()
+    return ''
 })
 
 const deleteErrorMessage = ref('')
@@ -48,7 +48,7 @@ const {
     pending: isLoadingHabits,
     error: habitsError,
     refresh: refreshHabits
-} = await useAsyncData(
+} = useAsyncData(
     'dashboard-habits',
     function () {
         return getHabits()
@@ -67,12 +67,14 @@ const {
     pending: isLoadingCheckins,
     error: checkinsError,
     refresh: refreshCheckins
-} = await useAsyncData(
+} = useAsyncData(
     'dashboard-checkins',
     function () {
         return getCheckins(todayDate.value)
     },
     {
+        server: false,
+        immediate: false,
         default: function () {
             return {
                 checkins: []
@@ -183,7 +185,10 @@ function handleVisibilityChange() {
 }
 
 onMounted(function () {
-    updateTodayDate()
+    todayDate.value = getTodayDate()
+
+    refreshCheckins()
+
     scheduleDateUpdate()
 
     window.addEventListener(
