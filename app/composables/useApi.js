@@ -1,3 +1,4 @@
+
 export function useApi() {
     const requestFetch = useRequestFetch()
     const nuxtApp = useNuxtApp()
@@ -71,8 +72,12 @@ export function useApi() {
             .trim()
     }
 
-    function isExpiredSession(error) {
+    function isExpiredSession(error, methodName) {
         const statusCode = error.statusCode || 0
+
+        if (methodName === 'login' && statusCode === 401) {
+            return false
+        }
 
         if (statusCode === 401) {
             return true
@@ -93,7 +98,7 @@ export function useApi() {
     }
 
     function handleExpiredSession(error, methodName, wasLoggedIn) {
-        if (!isExpiredSession(error)) {
+        if (!isExpiredSession(error, methodName)) {
             return
         }
 
@@ -154,6 +159,9 @@ export function useApi() {
             })
             .catch(function (error) {
                 const normalized = normalizeError(error)
+
+                normalized.methodName = methodName
+
                 const wasLoggedIn = Boolean(authState.value.userName)
 
                 handleExpiredSession(
@@ -167,13 +175,19 @@ export function useApi() {
     }
 
     function getErrorMessage(error) {
+        const methodName = error && error.methodName
         const normalized = normalizeError(error)
+
         const statusCode = normalized.statusCode
         const serverMessage = getPlainText(
             getServerMessage(normalized)
         )
 
-        if (isExpiredSession(normalized)) {
+        if (methodName === 'login' && statusCode === 401) {
+            return 'نام کاربری یا رمز عبور اشتباه است.'
+        }
+
+        if (isExpiredSession(normalized, methodName)) {
             return 'نشست شما منقضی شده است. دوباره وارد حساب شوید.'
         }
 
